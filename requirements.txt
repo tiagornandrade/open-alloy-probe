@@ -1,2 +1,3 @@
 faker
 opentelemetry-distro
+psycopg2-binary
