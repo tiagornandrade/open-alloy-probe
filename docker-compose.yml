@@ -1,0 +1,67 @@
+version: '3.7'
+
+services:
+  postgresql-primary:
+    image: timescale/timescaledb:latest-pg12
+    restart: always
+    ports:
+      - '5432:5432'
+    volumes:
+      - postgresql_master_data:/var/lib/postgresql/data
+      - ./initdb.d:/docker-entrypoint-initdb.d
+    environment:
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_USER=postgres
+      - POSTGRES_DB=postgres
+
+  postgresql-replica:
+    image: timescale/timescaledb:latest-pg12
+    restart: always
+    ports:
+      - '5433:5432'
+    depends_on:
+      - postgresql-primary
+    environment:
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_USER=postgres
+      - POSTGRES_DB=postgres
+      - POSTGRES_MASTER_SERVICE_HOST=postgresql-primary
+      - POSTGRES_MASTER_SERVICE_PORT=5432
+
+  pgbouncer:
+    image: edoburu/pgbouncer
+    restart: always
+    ports:
+      - '6432:6432'
+    environment:
+      - DB_USER=postgres
+      - DB_PASSWORD=postgres
+      - DB_HOST=postgresql-primary
+      - DB_PORT=5432
+      - POOL_MODE=session
+      - MAX_CLIENT_CONN=100
+      - DEFAULT_POOL_SIZE=20
+      - AUTH_TYPE=md5
+      - AUTH_FILE=/etc/pgbouncer/users.txt
+    volumes:
+      - ./pgbouncer/users.txt:/etc/pgbouncer/users.txt
+
+  jaeger:
+    image: jaegertracing/all-in-one:latest
+    restart: always
+    ports:
+      - '16686:16686'
+
+  pgadmin:
+    image: dpage/pgadmin4
+    restart: always
+    ports:
+      - '8080:80'
+    environment:
+      - PGADMIN_DEFAULT_EMAIL=admin@example.com
+      - PGADMIN_DEFAULT_PASSWORD=admin
+
+
+volumes:
+  postgresql_master_data:
+    driver: local
