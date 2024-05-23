@@ -18,3 +18,6 @@ install-lib:
 
 run-opentelemetry:
 	opentelemetry-bootstrap -a install
+
+run:
+	python3 src/generate.py

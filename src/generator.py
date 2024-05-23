@@ -3,6 +3,7 @@ from faker import Faker
 from datetime import datetime, timezone
 import psycopg2
 
+
 class DataGenerator:
     def __init__(self):
         self.fake = Faker()
@@ -28,6 +29,7 @@ class DataGenerator:
         try:
             conn = psycopg2.connect(connection_string)
             cursor = conn.cursor()
+            print("Starting to insert data...")
 
             for i, item in enumerate(data, 1):
                 cols = ', '.join(item.keys())
@@ -39,10 +41,11 @@ class DataGenerator:
                     conn.commit()
 
             conn.commit()
+            print("Inserted all records")
 
             cursor.close()
             conn.close()
-            print("Data inserted successfully!")
+            print(f"Data inserted successfully! - {i}")
         except psycopg2.Error as e:
             print(f"Error inserting data into PostgreSQL: {e}")
 

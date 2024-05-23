@@ -9,10 +9,13 @@ services:
     volumes:
       - postgresql_master_data:/var/lib/postgresql/data
       - ./initdb.d:/docker-entrypoint-initdb.d
+      - ./primary/postgresql.conf:/etc/postgresql/postgresql.conf
+      - ./primary/pg_hba.conf:/etc/postgresql/pg_hba.conf
     environment:
       - POSTGRES_PASSWORD=postgres
       - POSTGRES_USER=postgres
       - POSTGRES_DB=postgres
+    command: postgres -c config_file=/etc/postgresql/postgresql.conf
 
   postgresql-replica:
     image: timescale/timescaledb:latest-pg12
@@ -21,12 +24,13 @@ services:
       - '5433:5432'
     depends_on:
       - postgresql-primary
+    volumes:
+      - postgresql_replica_data:/var/lib/postgresql/data
+      - ./replica/recovery.conf:/etc/postgresql/recovery.conf
     environment:
       - POSTGRES_PASSWORD=postgres
       - POSTGRES_USER=postgres
       - POSTGRES_DB=postgres
-      - POSTGRES_MASTER_SERVICE_HOST=postgresql-primary
-      - POSTGRES_MASTER_SERVICE_PORT=5432
 
   pgbouncer:
     image: edoburu/pgbouncer
@@ -61,7 +65,8 @@ services:
       - PGADMIN_DEFAULT_EMAIL=admin@example.com
       - PGADMIN_DEFAULT_PASSWORD=admin
 
-
 volumes:
   postgresql_master_data:
+    driver: local
+  postgresql_replica_data:
     driver: local
