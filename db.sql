@@ -1,17 +1,19 @@
-GRANT ALL PRIVILEGES ON ALL TABLES IN SCHEMA public TO repl_user;
-ALTER USER repl_user WITH SUPERUSER;
+GRANT ALL PRIVILEGES ON ALL TABLES IN SCHEMA public TO postgres;
+ALTER USER postgres WITH SUPERUSER;
+
+CREATE EXTENSION IF NOT EXISTS timescaledb CASCADE;
 
 
 CREATE TABLE public.transactions (
     transactionId UUID,
-    productId STRING,
-    productName STRING,
-    productCategory STRING,
+    productId VARCHAR,
+    productName VARCHAR,
+    productCategory VARCHAR,
     productPrice FLOAT,
     productQuantity INT,
-    productBrand STRING,
-    currency STRING,
-    customerId STRING,
+    productBrand VARCHAR,
+    currency VARCHAR,
+    customerId VARCHAR,
     transactionDate TIMESTAMP,
-    paymentMethod STRING
+    paymentMethod VARCHAR
 );

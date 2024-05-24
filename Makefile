@@ -18,3 +18,12 @@ install-lib:
 
 run-opentelemetry:
 	opentelemetry-bootstrap -a install
+
+config-pgadmin:
+	curl -X POST \
+	  -H "Content-Type: application/json" \
+	  -d '{"name":"postgres", "host":"localhost", "port":5432, "sslMode":"prefer", "maintenanceDB":"postgresql-primary", "username":"postgres", "password":"postgres"}' \
+	  http://localhost:8080/servers
+
+run-generate:
+	python3 generate.py

@@ -1,7 +1,13 @@
 import random
+import logging
+import psycopg2
 from faker import Faker
 from datetime import datetime, timezone
-import psycopg2
+
+
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+
 
 class DataGenerator:
     def __init__(self):
@@ -29,6 +35,8 @@ class DataGenerator:
             conn = psycopg2.connect(connection_string)
             cursor = conn.cursor()
 
+            logger.info("Inserting data into PostgreSQL ...")
+
             for i, item in enumerate(data, 1):
                 cols = ', '.join(item.keys())
                 placeholders = ', '.join(['%s'] * len(item))
@@ -37,21 +45,26 @@ class DataGenerator:
 
                 if i % commit_every == 0:
                     conn.commit()
+                    logger.info(f"Inserted {i} records")
 
             conn.commit()
 
             cursor.close()
             conn.close()
-            print("Data inserted successfully!")
+
+            logger.info("Data inserted successfully!")
+            logger.info("Data inserted into PostgreSQL ...")
         except psycopg2.Error as e:
-            print(f"Error inserting data into PostgreSQL: {e}")
+            logger.info(f"Error inserting data into PostgreSQL: {e}")
 
 
 if __name__ == "__main__":
+    logger.info("Starting Generating data...")
     generator = DataGenerator()
 
     data_to_insert = [generator.generate() for _ in range(100000)]
 
     table_name = "transactions"
     connection_string = "dbname='postgres' user='postgres' host='localhost' password='postgres'"
+    logger.info("Starting Writing data...")
     generator.write_to_postgres(data_to_insert, table_name, connection_string, commit_every=1000)
