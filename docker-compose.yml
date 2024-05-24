@@ -2,35 +2,43 @@ version: '3.7'
 
 services:
   postgresql-primary:
-    image: timescale/timescaledb:latest-pg12
+    image: bitnami/postgresql:13
     restart: always
     ports:
       - '5432:5432'
     volumes:
-      - postgresql_master_data:/var/lib/postgresql/data
-      - ./initdb.d:/docker-entrypoint-initdb.d
-      - ./primary/postgresql.conf:/etc/postgresql/postgresql.conf
-      - ./primary/pg_hba.conf:/etc/postgresql/pg_hba.conf
+      - postgresql_master_data:/home/postgres/pgdata/data
+      - ./db.sql:/docker-entrypoint-initdb.d/db.sql
     environment:
-      - POSTGRES_PASSWORD=postgres
-      - POSTGRES_USER=postgres
-      - POSTGRES_DB=postgres
-    command: postgres -c config_file=/etc/postgresql/postgresql.conf
+      - POSTGRESQL_PGAUDIT_LOG=READ,WRITE
+      - POSTGRESQL_LOG_HOSTNAME=true
+      - POSTGRESQL_REPLICATION_MODE=master
+      - POSTGRESQL_REPLICATION_USER=repl_user
+      - POSTGRESQL_REPLICATION_PASSWORD=repl_user
+      - POSTGRESQL_USERNAME=postgres
+      - POSTGRESQL_PASSWORD=postgres
+      - POSTGRESQL_DATABASE=postgres
+      - ALLOW_EMPTY_PASSWORD=no
+      - POSTGRES_HOST_AUTH_METHOD=trust
 
   postgresql-replica:
-    image: timescale/timescaledb:latest-pg12
+    image: bitnami/postgresql:13
     restart: always
     ports:
       - '5433:5432'
     depends_on:
       - postgresql-primary
-    volumes:
-      - postgresql_replica_data:/var/lib/postgresql/data
-      - ./replica/recovery.conf:/etc/postgresql/recovery.conf
     environment:
-      - POSTGRES_PASSWORD=postgres
-      - POSTGRES_USER=postgres
-      - POSTGRES_DB=postgres
+      - POSTGRESQL_PASSWORD=postgres
+      - POSTGRESQL_MASTER_HOST=postgresql-primary
+      - POSTGRESQL_PGAUDIT_LOG=READ
+      - POSTGRESQL_LOG_HOSTNAME=true
+      - POSTGRESQL_REPLICATION_MODE=slave
+      - POSTGRESQL_REPLICATION_USER=repl_user
+      - POSTGRESQL_REPLICATION_PASSWORD=repl_user
+      - POSTGRESQL_MASTER_PORT_NUMBER=5432
+      - ALLOW_EMPTY_PASSWORD=no
+      - POSTGRES_HOST_AUTH_METHOD=trust
 
   pgbouncer:
     image: edoburu/pgbouncer
@@ -50,12 +58,6 @@ services:
     volumes:
       - ./pgbouncer/users.txt:/etc/pgbouncer/users.txt
 
-  jaeger:
-    image: jaegertracing/all-in-one:latest
-    restart: always
-    ports:
-      - '16686:16686'
-
   pgadmin:
     image: dpage/pgadmin4
     restart: always
@@ -67,6 +69,4 @@ services:
 
 volumes:
   postgresql_master_data:
-    driver: local
-  postgresql_replica_data:
     driver: local
